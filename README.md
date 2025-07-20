@@ -2,6 +2,7 @@
 
 [![Website](https://img.shields.io/badge/%F0%9F%A4%8D%20Project%20-Website-blue)](https://tianfwang.github.io/slurpp/)
 [![Paper](doc/badges/badge-pdf.svg)](https://arxiv.org/abs/2507.07878)
+[![Model](https://img.shields.io/badge/%F0%9F%A4%97-Model-yellow)](https://huggingface.co/Tianfwang/SLURPP)
 [![License](https://img.shields.io/badge/License-Apache--2.0-929292)](https://www.apache.org/licenses/LICENSE-2.0)
 
 This repository represents the official implementation of the paper titled "Single-Step Latent Diffusion for Underwater Image Restoration".
