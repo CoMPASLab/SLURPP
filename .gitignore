@@ -198,6 +198,7 @@ cython_debug/
 **/__pycache__
 *.png
 !doc/*.png
+!test_data/*.png
 *.jpg
 *.jpeg
 *.gif
