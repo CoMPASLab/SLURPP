@@ -125,7 +125,6 @@ dependencies:
       - depth-pro==0.1
       - diffusers==0.30.3
       - docker-pycreds==0.4.0
-      - dpt==0.0.1.dev1
       - drjit==1.0.1
       - exceptiongroup==1.2.2
       - executing==2.1.0
