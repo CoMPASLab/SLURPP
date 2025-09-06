@@ -18,4 +18,6 @@ MG_CONFIG=${RUN_DIR}/config.yaml
 CKPT=${RUN_DIR}/checkpoint/${CKPT_NAME}
 STAGE2=../models/slurpp/checkpoint/cld/cld_clear.pth
 
-python infer_real.py --config $MG_CONFIG --checkpoint $CKPT --output_dir $OUTPUT_DIR --stage2_checkpoint $STAGE2 --data_dir $DATA_DIR
+# Use virtual environment python
+PYTHON_BIN="$(cd ../ && pwd)/.venv/bin/python"
+$PYTHON_BIN infer_real.py --config $MG_CONFIG --checkpoint $CKPT --output_dir $OUTPUT_DIR --stage2_checkpoint $STAGE2 --data_dir $DATA_DIR --offload_unet --inference_resolution 1024 --restore_original_size
