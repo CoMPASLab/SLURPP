@@ -29,7 +29,7 @@ dash-core-components==2.0.0
 dash-html-components==2.0.0
 dash-table==5.0.0
 decorator==5.1.1
-depth-pro==0.1
+# depth-pro==0.1 - Not available via pip --- IGNORE ---
 diffusers==0.30.3
 docker-pycreds==0.4.0
 drjit==1.0.1
