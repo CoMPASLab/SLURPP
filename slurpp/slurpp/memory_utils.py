@@ -1,6 +1,10 @@
-import torch
 import gc
 import pickle
+import warnings
+
+import torch
+from diffusers import AutoencoderKL, DDIMScheduler, UNet2DConditionModel
+from transformers import CLIPTextModel, CLIPTokenizer
 
 
 def safe_torch_load(path, map_location='cpu'):
@@ -18,7 +22,6 @@ def safe_torch_load(path, map_location='cpu'):
 
             # Try loading without weights_only restriction
             try:
-                import warnings
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     return torch.load(path, map_location=map_location, pickle_module=pickle)
@@ -123,24 +126,24 @@ def enable_memory_efficient_mode(pipe):
 def aggressive_memory_optimization(pipe, device):
     """Apply aggressive memory optimizations."""
     print("🔥 Applying aggressive memory optimizations...")
-    
+
     # Move all non-essential components to CPU
     if hasattr(pipe, 'text_encoder') and pipe.text_encoder is not None:
         pipe.text_encoder = pipe.text_encoder.to('cpu')
         print("✓ Text encoder moved to CPU")
-    
+
     if hasattr(pipe, 'vae') and pipe.vae is not None:
         pipe.vae = pipe.vae.to('cpu')
         print("✓ VAE moved to CPU")
-    
+
     # Keep only UNet on GPU during inference
     if hasattr(pipe, 'unet') and pipe.unet is not None:
         pipe.unet = pipe.unet.to(device)
         print("✓ UNet kept on GPU")
-    
+
     # Clear cache
     clear_gpu_memory()
-    
+
     return pipe
 
 
@@ -155,7 +158,7 @@ def move_component_to_device(component, device):
 def use_half_precision(pipe):
     """Convert pipeline to half precision to save memory."""
     print("🔧 Converting to half precision (float16)...")
-    
+
     try:
         if hasattr(pipe, 'unet') and pipe.unet is not None:
             pipe.unet = pipe.unet.half()
@@ -168,60 +171,57 @@ def use_half_precision(pipe):
         print("✓ Pipeline converted to half precision")
     except Exception as e:
         print(f"⚠ Half precision conversion failed: {e}")
-    
+
     return pipe
 
 
 def enable_gradient_checkpointing(pipe):
     """Enable gradient checkpointing to trade compute for memory."""
     print("🔧 Enabling gradient checkpointing...")
-    
+
     try:
         if hasattr(pipe, 'unet') and pipe.unet is not None:
             pipe.unet.enable_gradient_checkpointing()
             print("✓ UNet gradient checkpointing enabled")
     except Exception as e:
         print(f"⚠ Gradient checkpointing failed: {e}")
-    
+
     return pipe
 
 
 def load_pipeline_selective(model_path, low_memory=False):
     """Load pipeline with selective component loading for memory optimization."""
-    from diffusers import AutoencoderKL, DDIMScheduler, UNet2DConditionModel
-    from transformers import CLIPTextModel, CLIPTokenizer
-    
     print(f"🔧 Loading pipeline with low_memory={low_memory}")
-    
+
     if low_memory:
         # Load components individually to CPU first
         print("Loading components to CPU...")
-        
+
         # Load UNet to CPU first
         unet = UNet2DConditionModel.from_pretrained(
             model_path, subfolder="unet", torch_dtype=torch.float32
         )
-        
+
         # Load VAE to CPU
         vae = AutoencoderKL.from_pretrained(
             model_path, subfolder="vae", torch_dtype=torch.float32
         )
-        
+
         # Load text encoder to CPU
         text_encoder = CLIPTextModel.from_pretrained(
             model_path, subfolder="text_encoder", torch_dtype=torch.float32
         )
-        
+
         # Load tokenizer
         tokenizer = CLIPTokenizer.from_pretrained(
             model_path, subfolder="tokenizer"
         )
-        
+
         # Load scheduler
         scheduler = DDIMScheduler.from_pretrained(
             model_path, subfolder="scheduler"
         )
-        
+
         # We'll return the components and let the main script create the pipeline
         return {
             'unet': unet,
@@ -230,7 +230,7 @@ def load_pipeline_selective(model_path, low_memory=False):
             'tokenizer': tokenizer,
             'scheduler': scheduler
         }
-        
+
     else:
         # Return None to use standard loading
         return None

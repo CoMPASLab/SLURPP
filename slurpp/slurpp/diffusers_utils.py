@@ -12,9 +12,7 @@ from diffusers import DDIMScheduler
 
 # Try to import safe loading function
 try:
-    import sys
-    sys.path.append('../..')
-    from memory_utils import safe_torch_load, ensure_consistent_dtype
+    from .memory_utils import safe_torch_load, ensure_consistent_dtype
     SAFE_LOAD_AVAILABLE = True
 except ImportError:
     SAFE_LOAD_AVAILABLE = False
@@ -88,7 +86,7 @@ def load_stage1(model_path, checkpoint_path, cfg, low_memory=False):
     # Try selective loading for low memory mode
     if low_memory and SAFE_LOAD_AVAILABLE:
         try:
-            from memory_utils import load_pipeline_selective
+            from .memory_utils import load_pipeline_selective
             components = load_pipeline_selective(model_path, low_memory=True)
             if components:
                 # Create pipeline with components on CPU

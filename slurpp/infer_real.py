@@ -19,9 +19,9 @@ from slurpp.io import normalize_imgs, save_image
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(root_dir)
 try:
-    from memory_utils import (clear_gpu_memory, get_memory_usage, enable_memory_efficient_mode,
-                              safe_torch_load, ensure_consistent_dtype, use_half_precision,
-                              enable_gradient_checkpointing, reduce_inference_resolution)
+    from slurpp.memory_utils import (get_memory_usage, safe_torch_load, ensure_consistent_dtype,
+                                     reduce_inference_resolution, use_half_precision, enable_gradient_checkpointing,
+                                     enable_memory_efficient_mode, clear_gpu_memory)
     MEMORY_UTILS_AVAILABLE = True
 except ImportError:
     MEMORY_UTILS_AVAILABLE = False
