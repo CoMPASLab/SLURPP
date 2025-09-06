@@ -110,6 +110,12 @@ if "__main__" == __name__:
         help="Resize output images back to original input dimensions.",
     )
 
+    parser.add_argument(
+        "--full_save",
+        action="store_true",
+        help="Save all output images (ill, bc, clear, composite). By default, only saves the corrected image.",
+    )
+
     args = parser.parse_args()
     cfg = args.config
     cfg = recursive_load_config(args.config)
@@ -346,19 +352,33 @@ if "__main__" == __name__:
                 sample_metric = []
                 output_pred = output_pred.to(device)
 
-                # save images
-                for i in range(len(outputs_fields)):
-                    output_pred_gc = output_pred[i:i+1].clone()
+                # Get the base filename without extension
+                base_name = os.path.splitext(save_name)[0]
+
+                if args.full_save:
+                    # Full save mode: save all output images
+                    for i in range(len(outputs_fields)):
+                        output_pred_gc = output_pred[i:i+1].clone()
+                        resize_size = original_size if args.restore_original_size else None
+                        save_image(f"{save_to_dir}/{save_name}_{outputs_fields[i]}.png",
+                                   output_pred_gc, resize_size)
+
+                    composite_img = batch["imgs"][inputs_fields[0]]
+                    composite_img = torch.clamp(composite_img, 0, 1).to(device)
+
                     resize_size = original_size if args.restore_original_size else None
-                    save_image(f"{save_to_dir}/{save_name}_{outputs_fields[i]}.png",
-                               output_pred_gc, resize_size)
-
-                composite_img = batch["imgs"][inputs_fields[0]]
-                composite_img = torch.clamp(composite_img, 0, 1).to(device)
-
-                resize_size = original_size if args.restore_original_size else None
-                save_image(f"{save_to_dir}/{save_name}_composite_img.png",
-                           composite_img, resize_size)
+                    save_image(f"{save_to_dir}/{save_name}_composite_img.png",
+                               composite_img, resize_size)
+                else:
+                    # Default mode: save only the first/main corrected image with the same name as input
+                    if len(output_pred) > 0:
+                        output_pred_gc = output_pred[0:1].clone()  # Take the first output as the main corrected image
+                        resize_size = original_size if args.restore_original_size else None
+                        # Use the same name as input (preserve original extension or use .png)
+                        input_ext = os.path.splitext(save_name)[1] or '.png'
+                        output_filename = f"{base_name}{input_ext}"
+                        save_image(f"{save_to_dir}/{output_filename}",
+                                   output_pred_gc, resize_size)
 
                 # Clear GPU cache after each batch to prevent memory accumulation
                 if MEMORY_UTILS_AVAILABLE:
