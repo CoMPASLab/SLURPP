@@ -269,7 +269,7 @@ class SlurppPipeline(DiffusionPipeline):
             rgb_in = rgb_in.to(device=target_device, dtype=target_dtype)
 
             # Use gradient checkpointing for memory efficiency
-            with torch.cuda.amp.autocast(enabled=False):
+            with torch.amp.autocast('cuda', enabled=False):
                 out = self.vae_cld.encode(rgb_in, skip_connection=True)
 
             self.composite_latents = out.composite_latents
