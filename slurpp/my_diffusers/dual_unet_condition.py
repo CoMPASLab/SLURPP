@@ -547,10 +547,10 @@ class AttentionUniDirectionProcessor(nn.Module):
         # hidden_states = hidden_states.to(q1.dtype)
         # hidden_states1, hidden_states2 = hidden_states.chunk(2, dim=1) #[batch_size * heads, seq_len, dim // heads]
 
-        hidden_states1 = xformers.ops.memory_efficient_attention(q1, k1, v1, scale=attn1.scale) 
-        hidden_states2 = xformers.ops.memory_efficient_attention(q2, k2,v2, scale=attn2.scale)
-        hidden_states1_cross = xformers.ops.memory_efficient_attention(q1_cross, k2, v2, scale=attn2.scale)     
-        hidden_states2_cross = xformers.ops.memory_efficient_attention(q2_cross, k1, v1, scale=attn1.scale)
+        hidden_states1 = F.scaled_dot_product_attention(q1, k1, v1, scale=attn1.scale)
+        hidden_states2 = F.scaled_dot_product_attention(q2, k2, v2, scale=attn2.scale)
+        hidden_states1_cross = F.scaled_dot_product_attention(q1_cross, k2, v2, scale=attn2.scale)
+        hidden_states2_cross = F.scaled_dot_product_attention(q2_cross, k1, v1, scale=attn1.scale)
 
         hidden_states1 =   hidden_states1 + hidden_states1_cross
         hidden_states2 =   hidden_states2 + hidden_states2_cross
