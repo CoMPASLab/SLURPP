@@ -2,6 +2,7 @@ import gc
 import pickle
 import warnings
 
+import numpy.core.multiarray
 import torch
 from diffusers import AutoencoderKL, DDIMScheduler, UNet2DConditionModel
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -12,24 +13,16 @@ def safe_torch_load(path, map_location='cpu'):
     Safely load PyTorch checkpoints with better compatibility.
     Handles numpy compatibility issues and memory optimization.
     """
+    # Allow numpy scalar types that appear in legacy checkpoints, then load with
+    # weights_only=True for safety.  Falls back to weights_only=False only when
+    # the checkpoint contains other unsupported globals.
     try:
-        # First try the standard approach
-        return torch.load(path, map_location=map_location)
-    except (pickle.UnpicklingError, AttributeError) as e:
-        if "numpy.core.multiarray.scalar" in str(e):
-            print(f"⚠ Compatibility issue detected: {e}")
-            print("🔄 Attempting alternative loading method...")
-
-            # Try loading without weights_only restriction
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    return torch.load(path, map_location=map_location, pickle_module=pickle)
-            except Exception as e2:
-                print(f"❌ Alternative loading failed: {e2}")
-                raise e
-        else:
-            raise e
+        with torch.serialization.safe_globals([numpy.core.multiarray.scalar]):
+            return torch.load(path, map_location=map_location, weights_only=True)
+    except Exception:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return torch.load(path, map_location=map_location, weights_only=False)
 
 
 def fix_dtype_mismatch(model, target_dtype=torch.float32):
@@ -214,7 +207,7 @@ def load_pipeline_selective(model_path, low_memory=False):
 
         # Load tokenizer
         tokenizer = CLIPTokenizer.from_pretrained(
-            model_path, subfolder="tokenizer"
+            model_path, subfolder="tokenizer", clean_up_tokenization_spaces=True
         )
 
         # Load scheduler
