@@ -2,6 +2,7 @@
 
 import logging
 import os
+import warnings
 
 import torch
 from torch.nn import Conv2d
@@ -103,16 +104,20 @@ def load_stage1(model_path, checkpoint_path, cfg, low_memory=False):
         except Exception as e:
             print(f"⚠ Selective loading failed: {e}, falling back to standard loading")
             # Fallback to standard loading
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
+                pipe = SlurppPipeline.from_pretrained(
+                    model_path,
+                    low_cpu_mem_usage=True,
+                )
+    else:
+        # Standard loading
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
             pipe = SlurppPipeline.from_pretrained(
                 model_path,
                 low_cpu_mem_usage=True,
             )
-    else:
-        # Standard loading
-        pipe = SlurppPipeline.from_pretrained(
-            model_path,
-            low_cpu_mem_usage=True,
-        )
 
     inputs_fields = getattr(cfg.trainer, 'inputs', ['diff'])
     outputs_fields = getattr(cfg.trainer, 'output', ['bc', 'ill'])
